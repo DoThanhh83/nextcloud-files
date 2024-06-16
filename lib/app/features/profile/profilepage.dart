@@ -19,8 +19,13 @@ class ProfilePage extends StatefulWidget {
 class _ProfilePageState extends State<ProfilePage> {
 
   Future<void> logout() async {
-    // SharedPreferences prefs =  await SharedPreferences();
-    // await prefs.remove('counter');
+    setState(() {
+      ApiPath.clearURLData();
+      ApiPath.clearUserData();
+      ApiPath.clearPassData();
+
+    });
+
   }
 
   String? displayName;

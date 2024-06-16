@@ -1,7 +1,7 @@
+import 'dart:convert';
 import 'dart:io';
 import 'dart:typed_data';
 
-import 'package:file_man/app/config/routes/app_pages.dart';
 import 'package:file_man/app/constans/app_constants.dart';
 import 'package:file_man/app/features/dashboard/home/views/components/widget_file_manage.dart';
 import 'package:file_man/app/features/dashboard/home/views/screens/new_home_screen.dart';
@@ -15,7 +15,7 @@ import 'package:nextcloud/webdav.dart';
 import 'package:percent_indicator/circular_percent_indicator.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:sizer/sizer.dart';
-import 'package:webdav_client/webdav_client.dart' as webdav;
+import 'package:uuid/uuid.dart';
 import '../../../../../utils/global.dart';
 import 'package:http/http.dart' as http;
 
@@ -418,40 +418,82 @@ class _FileManageState extends State<FileManage> {
     String name = FileManager.basename(selectedFile);
     bool isLargeFile = false;
 
-    // Kiểm tra xem file có quá lớn không giới hạn dung lượng 1GB
+    // Kiểm tra xem file có quá lớn không giới hạn dung lượng 512MB
     await file.length().then((value) {
-      if (value > 400000) {
+      if (value > 512 * 1024 * 1024) {
         isLargeFile = true;
       }
     });
     if (isLargeFile) {
-       // try {
-       //   final data = await file.openRead();
-       //   List<int> bytes = [];
-       //   await for (var value in data) {
-       //     bytes.addAll(value);
-       //   }
-       //   upFile(name, Uint8List.fromList(bytes));
-       //  } catch (e) {
-       //    Fluttertoast.showToast(msg: "Lỗi khi tải $name lên: $e");
-       //  }
-       try {
-         final data = file.openRead();
-         final length = await file.length();
-         ///tạo urlss là t APiPath.baseUrl và remote.php/dav/files/user/ + name
-          final urlss = ApiPath.BASE_URL + "/remote.php/dav/files/user/" + name;
-         final request = http.MultipartRequest('PUT', Uri.parse(urlss));
-         request.files.add(http.MultipartFile('file', data, length, filename: name));
-         final response = await request.send();
-         if (response.statusCode == 200) {
-           Fluttertoast.showToast(msg: "Tải lên file $name thành công");
-         } else {
-           Fluttertoast.showToast(msg: "Lỗi khi tải $name lên: ${response.statusCode}");
-         }
-       } catch (e) {
-         print(e);
-         Fluttertoast.showToast(msg: "Lỗi khi tải $name lên: $e");
-       }
+      final cli = Global.client;
+      var uuid = Uuid().v4();
+
+      // Create a unique folder for the chunks
+      PathUri urlChunk = PathUri.parse(
+          '${ApiPath.BASE_URL}/remote.php/dav/uploads/${Global.userName}/$uuid');
+      cli?.webdav.mkcol(urlChunk);
+      var chunkSize = 5 * 1024 * 1024; // 5MB
+      var totalChunks = (file.lengthSync() / chunkSize).ceil();
+      for (var i = 0; i < totalChunks; i++) {
+        // Read the entire file as bytes
+        var allBytes = await file.readAsBytes();
+        // Get the specific chunk
+        var chunk = allBytes.sublist(i * chunkSize, (i + 1) * chunkSize);
+
+        final urlChunkNew = PathUri.parse(
+            '${ApiPath.BASE_URL}/remote.php/dav/uploads/${Global.userName}/$uuid/$i');
+        await cli!.webdav.put(chunk, urlChunkNew);
+        // await http.put(
+        //   Uri.parse('${ApiPath.BASE_URL}/remote.php/dav/uploads/${Global.userName}/$uuid/$i'),
+        //   headers: {
+        //     'Authorization': 'Basic ' + base64Encode(utf8.encode('${Global.userName}:${Global.password}')),
+        //     'Destination': '${ApiPath.BASE_URL}/remote.php/dav/files/${Global.userName}/$destinationPath',
+        //   },
+        //   body: chunk,
+        // );
+      }
+      // Assemble the chunks
+      await cli!.webdav
+          .move(
+              PathUri.parse(
+                  "PathUri.parse('${ApiPath.BASE_URL}/remote.php/dav/uploads/${Global.userName}/$uuid"),
+              PathUri.parse(
+                  "${ApiPath.BASE_URL}/remote.php/dav/files/${Global.userName}/file.zip"))
+          .then((value) {
+        Fluttertoast.showToast(msg: "Tải lên file  $name thành công");
+      });
+
+      // try {
+      //   final data = await file.openRead();
+      //   List<int> bytes = [];
+      //   await for (var value in data) {
+      //     bytes.addAll(value);
+      //   }
+      //   upFile(name, Uint8List.fromList(bytes));
+      //  } catch (e) {
+      //    Fluttertoast.showToast(msg: "Lỗi khi tải $name lên: $e");
+      //  }
+
+      /// ngat tam thoi
+
+      // try {
+      //   final data = file.openRead();
+      //   final length = await file.length();
+      //   ///tạo urlss là t APiPath.baseUrl và remote.php/dav/files/user/ + name
+      //    final urlss = ApiPath.BASE_URL + "/remote.php/dav/files/user/" + name;
+      //   final request = http.MultipartRequest('PUT', Uri.parse(urlss));
+      //   request.files.add(http.MultipartFile('file', data, length, filename: name));
+      //   final response = await request.send();
+      //   if (response.statusCode == 200) {
+      //     Fluttertoast.showToast(msg: "Tải lên file $name thành công");
+      //   } else {
+      //     Fluttertoast.showToast(msg: "Lỗi khi tải $name lên: ${response.statusCode}");
+      //   }
+      // } catch (e) {
+      //   print(e);
+      //   Fluttertoast.showToast(msg: "Lỗi khi tải $name lên: $e");
+      // }
+      /// het ngat
     } else {
       // Đọc toàn bộ file nếu file không quá lớn
       final data = await file.readAsBytes();

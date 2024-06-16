@@ -1,11 +1,10 @@
 import 'dart:async';
-import 'dart:io';
 import 'dart:typed_data';
 import 'package:file_man/app/constans/app_constants.dart';
+import 'package:file_man/app/features/dashboard/home/views/screens/config_share_page.dart';
 import 'package:file_man/app/features/dashboard/home/views/screens/list_sharing_to.dart';
 import 'package:file_man/app/features/dashboard/home/views/screens/list_user_sharing.dart';
 import 'package:file_man/app/features/dashboard/home/views/screens/ocr_page.dart';
-import 'package:file_man/app/features/dashboard/home/views/screens/preview_markdown.dart';
 import 'package:file_man/app/features/dashboard/home/views/screens/preview_pdf.dart';
 import 'package:file_man/app/utils/global.dart';
 import 'package:file_picker/file_picker.dart';
@@ -13,13 +12,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_speed_dial/flutter_speed_dial.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:nextcloud/files.dart';
-import 'package:nextcloud/files_sharing.dart';
 import 'package:nextcloud/nextcloud.dart';
-import 'package:nextcloud/webdav.dart';
-import 'package:open_file_plus/open_file_plus.dart';
-import 'package:path_provider/path_provider.dart';
 import 'package:webdav_client/webdav_client.dart' as webdav;
-import 'package:fluttertoast/fluttertoast.dart';
+
+import '../../controllers/fileNextcloud_controller.dart';
 
 class FileNextCould extends StatefulWidget {
   final String? url;
@@ -50,6 +46,17 @@ class _FileListScreenState extends State<FileNextCould> {
   String? temp;
   ValueNotifier<bool> isDialOpen = ValueNotifier(false);
 
+  late FileNextCloudController controller;
+  //
+  // @override
+  // void initState() {
+  // super.initState();
+  // controller = FileNextCloudController(client, cli);
+  // controller.loadData();
+  // }
+  //
+  // // Use the controller in other methods
+  // }
   @override
   void initState() {
     super.initState();
@@ -59,8 +66,11 @@ class _FileListScreenState extends State<FileNextCould> {
         pwd = Global.password ?? "";
       });
       loadData();
+
+      controller = FileNextCloudController(client, cli);
+      // controller.loadData();
     } else {
-      print(Global.userName);
+      print("Không có thông tin đăng nhập");
     }
   }
 
@@ -79,8 +89,6 @@ class _FileListScreenState extends State<FileNextCould> {
   }
 
   Future<Uint8List?>? getThumnails(String? name, {int? idFile}) async {
-    // final cli = NextcloudClient(Uri.parse(ApiPath.BASE_URL),
-    //     loginName: 'admin', password: 'admin');
     if (name!.startsWith('/')) {
       name = name.substring(1);
     }
@@ -102,101 +110,150 @@ class _FileListScreenState extends State<FileNextCould> {
       });
     }
   }
+  //
+  // Future<Uint8List?>? getContent(String? name) async {
+  //   if (name!.startsWith('/')) {
+  //     name = name.substring(1);
+  //   }
+  //   if (widget.previsionUrl != null) {
+  //     final ppah = widget.previsionUrl! + name;
+  //     PathUri pathUri = PathUri.parse(ppah);
+  //     final file = cli.webdav.get(pathUri);
+  //     return await file.then((value) {
+  //       print("value Contetn body có previsionUrl ");
+  //       return value;
+  //     });
+  //   } else {
+  //     PathUri pathUri = PathUri.parse(name);
+  //     final file = cli.webdav.get(pathUri);
+  //     return await file.then((value) {
+  //       print("value Contetn body");
+  //       return value;
+  //     });
+  //   }
+  // }
+  //
+  // Future<List<webdav.File>> _getData() {
+  //   return client.readDir(dirPath);
+  // }
+  //
+  // Future<void> shareFile(String path, String userName) async {
+  //   ///permission 19 :  edit
+  //   final fileShare = await cli.filesSharing.shareapi.createShare(
+  //       path: path.substring(1),
+  //       permissions: 19,
+  //       shareType: 0,
+  //       shareWith: userName);
+  //   if (fileShare.statusCode == 200) {
+  //     Fluttertoast.showToast(
+  //       msg: "Chia sẻ thành công",
+  //     );
+  //   } else {
+  //     Fluttertoast.showToast(msg: "Đã có lỗi!");
+  //   }
+  // }
+  //
+  // Future<void> deleteFile(String? nameFile) async {
+  //   if (widget.previsionUrl != null) {
+  //     final ppah = widget.previsionUrl! + nameFile!;
+  //     PathUri urlDelete = PathUri.parse(ppah);
+  //     final file = cli.webdav.delete(urlDelete);
+  //     file.then((value) {
+  //       print(value);
+  //       Fluttertoast.showToast(
+  //           msg: "Xóa file $nameFile thành công!", timeInSecForIosWeb: 2);
+  //     });
+  //   } else {
+  //     PathUri urlDelete = PathUri.parse(nameFile!);
+  //     final file = cli.webdav.delete(urlDelete);
+  //     file.then((value) {
+  //       print(value);
+  //       Fluttertoast.showToast(
+  //           msg: "Xóa file $nameFile thành công!", timeInSecForIosWeb: 2);
+  //     });
+  //   }
+  // }
+  //
+  // void uploadFile(String? nameFile, Uint8List localData) {
+  //   if (widget.previsionUrl != null) {
+  //     final ppah = widget.previsionUrl! + nameFile!;
+  //     PathUri urlPut = PathUri.parse(ppah);
+  //     final file = cli.webdav.put(localData, urlPut);
+  //     file.then((value) {
+  //       print(value);
+  //       Fluttertoast.showToast(
+  //           msg: "Upload file $nameFile thành công!", timeInSecForIosWeb: 2);
+  //     });
+  //   } else {
+  //     PathUri urlPut = PathUri.parse(nameFile!);
+  //     final file = cli.webdav.put(localData, urlPut);
+  //     file.then((value) {
+  //       print(value);
+  //       Fluttertoast.showToast(
+  //           msg: "Upload file $nameFile thành công!", timeInSecForIosWeb: 2);
+  //     });
+  //   }
+  // }
+  // void downloadAndOpenFile(webdav.File file, String direcPath,
+  //     {String? previousPath}) async {
+  //   if (file.name!.endsWith('.md')) {
+  //     var datas = await getContent(file.path);
+  //     var acb = datas as Uint8List;
+  //     Navigator.push(
+  //         context,
+  //         MaterialPageRoute(
+  //             builder: (context) =>
+  //                 PreviewMarkdown(title: file.name, data: acb)));
+  //   } else {
+  //     var fullPath = direcPath;
+  //     if (previousPath != null) {
+  //       fullPath = previousPath + direcPath;
+  //     }
+  //     PathUri path = PathUri.parse(fullPath);
+  //     final bytes = await cli.webdav.get(path);
+  //     final dir = await getApplicationDocumentsDirectory();
+  //     final localFile = File('${dir.path}/${file.name}');
+  //     await localFile.writeAsBytes(bytes);
+  //     // Open the file
+  //     OpenFile.open(localFile.path);
+  //   }
+  // }
+  //
+  // void downloadFile(webdav.File file, String direcPath,
+  //     {String? previousPath}) async {
+  //   final folderName = "Nextcloud Download";
+  //   final dir = Directory("storage/emulated/0/$folderName");
+  //
+  //   if (await dir.exists()) {
+  //     // thư mục đã tồn tại, không cần làm gì
+  //   } else {
+  //     // thư mục chưa tồn tại, tạo nó
+  //     await dir.create();
+  //   }
+  //   var fullPath = direcPath;
+  //   if (previousPath != null) {
+  //     fullPath = previousPath + direcPath;
+  //   }
+  //   PathUri path = PathUri.parse(fullPath);
+  //   final bytes = await cli.webdav.get(path);
+  //   final localFile = File('${dir.path}/${file.name}');
+  //   await localFile.writeAsBytes(bytes).then((value) {
+  //     Fluttertoast.showToast(msg: "Đã tải ${file.name} về thư mục $dir",timeInSecForIosWeb: 3);
+  //   });
+  //
+  // }
 
-  Future<Uint8List?>? getContent(String? name) async {
-    if (name!.startsWith('/')) {
-      name = name.substring(1);
-    }
-    if (widget.previsionUrl != null) {
-      final ppah = widget.previsionUrl! + name;
-      PathUri pathUri = PathUri.parse(ppah);
-      final file = cli.webdav.get(pathUri);
-      return await file.then((value) {
-        print("value Contetn body có previsionUrl ");
-        return value;
-      });
-    } else {
-      PathUri pathUri = PathUri.parse(name);
-      final file = cli.webdav.get(pathUri);
-      return await file.then((value) {
-        print("value Contetn body");
-        return value;
-      });
-    }
-  }
-
-  Future<List<webdav.File>> _getData() {
-    return client.readDir(dirPath);
-  }
-
-  Future<void> shareFile(String path, String userName) async {
-    ///permission 19 :  edit
-    final fileShare = await cli.filesSharing.shareapi.createShare(
-        path: path.substring(1),
-        permissions: 19,
-        shareType: 0,
-        shareWith: userName);
-    if (fileShare.statusCode == 200) {
-      Fluttertoast.showToast(
-        msg: "Chia sẻ thành công",
-      );
-    } else {
-      Fluttertoast.showToast(msg: "Đã có lỗi!");
-    }
-  }
-
-  Future<void> deleteFile(String? nameFile) async {
-    if (widget.previsionUrl != null) {
-      final ppah = widget.previsionUrl! + nameFile!;
-      PathUri urlDelete = PathUri.parse(ppah);
-      final file = cli.webdav.delete(urlDelete);
-      file.then((value) {
-        print(value);
-        Fluttertoast.showToast(
-            msg: "Xóa file $nameFile thành công!", timeInSecForIosWeb: 2);
-      });
-    } else {
-      PathUri urlDelete = PathUri.parse(nameFile!);
-      final file = cli.webdav.delete(urlDelete);
-      file.then((value) {
-        print(value);
-        Fluttertoast.showToast(
-            msg: "Xóa file $nameFile thành công!", timeInSecForIosWeb: 2);
-      });
-    }
-  }
-
-  void uploadFile(String? nameFile, Uint8List localData) {
-    if (widget.previsionUrl != null) {
-      final ppah = widget.previsionUrl! + nameFile!;
-      PathUri urlPut = PathUri.parse(ppah);
-      final file = cli.webdav.put(localData, urlPut);
-      file.then((value) {
-        print(value);
-        Fluttertoast.showToast(
-            msg: "Upload file $nameFile thành công!", timeInSecForIosWeb: 2);
-      });
-    } else {
-      PathUri urlPut = PathUri.parse(nameFile!);
-      final file = cli.webdav.put(localData, urlPut);
-      file.then((value) {
-        print(value);
-        Fluttertoast.showToast(
-            msg: "Upload file $nameFile thành công!", timeInSecForIosWeb: 2);
-      });
-    }
-  }
-
-  Widget thumbnail(webdav.File file) {
+  Widget thumbnail(webdav.File file, {double? sizeIcon}) {
     if (file.name!.endsWith("doc") || file.name!.endsWith("docx")) {
-      return Icon(CustomIcons.ms_word, size: 50);
+      return Icon(CustomIcons.ms_word, size:sizeIcon ?? 50 , color: Color(0xFF2B579A),);
     } else if (file.name!.endsWith("pptx") || file.name!.endsWith("ppt")) {
-      return Icon(CustomIcons.ms_power_point, size: 50);
+      return Icon(CustomIcons.ms_power_point,size:sizeIcon ?? 50 , color: Color(0xFFD24726));
     } else if (file.name!.endsWith("xlsx") || file.name!.endsWith("xls")) {
-      return Icon(CustomIcons.ms_excel, size: 50);
+      return Icon(CustomIcons.ms_excel, size:sizeIcon ?? 50 , color: Color(0xFF217346));
     }
-    return Icon(Icons.file_present_rounded, size: 50);
+    return Icon(Icons.file_present_rounded,size:sizeIcon ?? 50 );
   }
+
 
   @override
   Widget build(BuildContext context) {
@@ -228,7 +285,8 @@ class _FileListScreenState extends State<FileNextCould> {
             IconButton(
                 onPressed: () {
                   setState(() {
-                    _getData();
+                    // _getData();
+                   controller.getData();
                   });
                 },
                 icon: Icon(Icons.rotate_left)),
@@ -244,7 +302,8 @@ class _FileListScreenState extends State<FileNextCould> {
           ],
         ),
         body: FutureBuilder(
-            future: _getData(),
+            // future: _getData(),
+            future: controller.getData(),
             builder: (BuildContext context,
                 AsyncSnapshot<List<webdav.File>> snapshot) {
               switch (snapshot.connectionState) {
@@ -305,8 +364,10 @@ class _FileListScreenState extends State<FileNextCould> {
                       );
                       if (result != null) {
                         PlatformFile file = result.files.first;
-                        uploadFile(file.name, file.bytes!);
-                        _getData();
+                        // uploadFile(file.name, file.bytes!);
+                        // _getData();
+                        controller.uploadFile(file.name, file.bytes!);
+                        controller.getData();
                       } else {
                         print('Không có tệp tin nào được chọn');
                       }
@@ -345,18 +406,25 @@ class _FileListScreenState extends State<FileNextCould> {
                             actions: [
                               TextButton(
                                   onPressed: () {
-                                    deleteFile(file.name).then(
-                                        (value) => Navigator.pop(context));
-                                    setState(() {
-                                      _getData();
-                                    });
+                                    // deleteFile(file.name).then(
+                                    //     (value) => Navigator.pop(context));
+                                    // setState(() {
+                                    //   _getData();
+                                    // });
+                                    controller.deleteFile(file.name).then(
+                                        (value) {
+                                          Navigator.pop(context);
+                                          setState(() {
+                                            controller.getData();
+                                          });
+                                        });
                                   },
                                   child: Text("Xác nhận")),
                               TextButton(
                                   onPressed: () {
                                     Navigator.pop(context);
                                   },
-                                  child: Text("Xác nhận")),
+                                  child: Text("Hủy")),
                             ],
                           );
                         });
@@ -375,7 +443,16 @@ class _FileListScreenState extends State<FileNextCould> {
                                       cli: cli,
                                       onDone: (val) {
                                         print(val);
-                                        shareFile(file.path!, val);
+                                        // shareFile(file.path!, val);
+                                        // controller.shareFile(file.path!, val);
+                                        Navigator.push(context, MaterialPageRoute(builder: (context)=> ConfigShareFile(
+                                          IconFile:thumbnail(file),
+                                          FileName: file.name,
+                                          receiver_name: val,
+                                          onDone: (per){
+                                            controller.shareFile(file.path!, val,permission: per);
+                                          }
+                                        )));
                                       },
                                     )));
                       },
@@ -407,31 +484,50 @@ class _FileListScreenState extends State<FileNextCould> {
                               child: Wrap(
                                 children: <Widget>[
                                   ListTile(
-                                      leading: Icon(Icons.remove_red_eye),
-                                      title: Text('Xem'),
-                                      onTap: () async {
-                                        Navigator.pop(context);
-                                        if (file.name!.endsWith('.pdf')) {
-                                          var datas = await getContent(file.path);
-                                          var acb = datas as Uint8List;
-                                          Navigator.push(
-                                              context,
-                                              MaterialPageRoute(
-                                                  builder: (context) =>
-                                                      PreviewFile(title: file.name, data: acb)));
-                                        } else {
-                                          downloadAndOpenFile(file, file.path!.substring(1));
-                                        }
-                                      }
+                                      leading: thumbnail(file,sizeIcon: 30),
+                                      title: Text(file.name ?? ''),
                                   ),
-                                  ListTile(
-                                    leading: Icon(Icons.download),
-                                    title: Text('Tải xuống'),
-                                    onTap: () {
-                                      downloadFile(file, file.path!.substring(1),
-                                          previousPath: widget.previsionUrl);
-                                      Navigator.pop(context);
-                                    },
+                                  Padding(
+                                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                                    child: ListTile(
+                                        leading: Icon(Icons.remove_red_eye),
+                                        title: Text('Xem'),
+                                        onTap: () async {
+                                          Navigator.pop(context);
+                                          if (file.name!.endsWith('.pdf')) {
+                                            // var datas = await getContent(file.path);
+                                            var datas = await controller.getContent(file.path);
+                                            var acb = datas as Uint8List;
+                                            Navigator.push(
+                                                context,
+                                                MaterialPageRoute(
+                                                    builder: (context) =>
+                                                        PreviewFile(title: file.name, data: acb)));
+                                          } else {
+                                            // downloadAndOpenFile(file, file.path!.substring(1));
+                                            controller.downloadAndOpenFile(context, file, file.path!.substring(1));
+                                          }
+                                        }
+                                    ),
+                                  ),
+                                  Container(
+                                    margin: EdgeInsets.symmetric(horizontal: 15),
+                                    height: 1,
+                                    color: Colors.grey,
+                                  ),
+                                  Padding(
+                                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                                    child: ListTile(
+                                      leading: Icon(Icons.download),
+                                      title: Text('Tải xuống'),
+                                      onTap: () {
+                                        // downloadFile(file, file.path!.substring(1),
+                                        //     previousPath: widget.previsionUrl);
+                                        controller.downloadFile(file, file.path!.substring(1),
+                                            previousPath: widget.previsionUrl);
+                                        Navigator.pop(context);
+                                      },
+                                    ),
                                   ),
                                 ],
                               ),
@@ -458,11 +554,18 @@ class _FileListScreenState extends State<FileNextCould> {
                             actions: [
                               TextButton(
                                   onPressed: () {
-                                    deleteFile(file.name).then(
-                                        (value) => Navigator.pop(context));
-                                    setState(() {
-                                      _getData();
-                                    });
+                                    // deleteFile(file.name).then(
+                                    //     (value) => Navigator.pop(context));
+                                    // setState(() {
+                                    //   _getData();
+                                    // });
+                                    controller.deleteFile(file.name).then(
+                                            (value) {
+                                          Navigator.pop(context);
+                                          setState(() {
+                                            controller.getData();
+                                          });
+                                        });
                                   },
                                   child: Text("Xác nhận")),
                               TextButton(
@@ -496,7 +599,16 @@ class _FileListScreenState extends State<FileNextCould> {
                                 builder: (context) => ListUser(
                                       cli: cli,
                                       onDone: (val) {
-                                        shareFile(file.path!, val);
+                                        // shareFile(file.path!, val);
+                                        // controller.shareFile(file.path!, val);
+                                        Navigator.push(context, MaterialPageRoute(builder: (context)=> ConfigShareFile(
+                                            IconFile:Image.memory(snapshot.data as Uint8List),
+                                            FileName: file.name,
+                                            receiver_name: val,
+                                            onDone: (per){
+                                              controller.shareFile(file.path!, val,permission: per);
+                                            }
+                                        )));
                                       },
                                     )
                             ));
@@ -525,23 +637,41 @@ class _FileListScreenState extends State<FileNextCould> {
                                 child: Wrap(
                                   children: <Widget>[
                                     ListTile(
-                                        leading: Icon(Icons.remove_red_eye),
-                                        title: Text('Xem'),
-                                        onTap: () {
-                                          Navigator.pop(context);
-
-                                          downloadAndOpenFile(file, file.path!.substring(1),
-                                              previousPath: widget.previsionUrl);
-                                        }
+                                      leading: Image.memory(snapshot.data as Uint8List),
+                                      title: Text(file.name ?? ''),
                                     ),
-                                    ListTile(
-                                      leading: Icon(Icons.download),
-                                      title: Text('Tải xuống'),
-                                      onTap: () {
-                                        downloadFile(file, file.path!.substring(1),
-                                            previousPath: widget.previsionUrl);
-                                        Navigator.pop(context);
-                                      },
+                                    Padding(
+                                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                                      child: ListTile(
+                                          leading: Icon(Icons.remove_red_eye),
+                                          title: Text('Xem'),
+                                          onTap: () {
+                                            Navigator.pop(context);
+                                            // downloadAndOpenFile(file, file.path!.substring(1),
+                                            //     previousPath: widget.previsionUrl);
+                                            controller.downloadAndOpenFile(context, file, file.path!.substring(1),
+                                                previousPath: widget.previsionUrl);
+                                          }
+                                      ),
+                                    ),
+                                    Container(
+                                      margin: EdgeInsets.symmetric(horizontal: 15),
+                                      height: 1,
+                                      color: Colors.grey,
+                                    ),
+                                    Padding(
+                                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                                      child: ListTile(
+                                        leading: Icon(Icons.download),
+                                        title: Text('Tải xuống'),
+                                        onTap: () {
+                                          // downloadFile(file, file.path!.substring(1),
+                                          //     previousPath: widget.previsionUrl);
+                                          controller.downloadFile(file, file.path!.substring(1),
+                                              previousPath: widget.previsionUrl);
+                                          Navigator.pop(context);
+                                        },
+                                      ),
                                     ),
                                   ],
                                 ),
@@ -557,52 +687,4 @@ class _FileListScreenState extends State<FileNextCould> {
         });
   }
 
-  void downloadAndOpenFile(webdav.File file, String direcPath,
-      {String? previousPath}) async {
-    if (file.name!.endsWith('.md')) {
-      var datas = await getContent(file.path);
-      var acb = datas as Uint8List;
-      Navigator.push(
-          context,
-          MaterialPageRoute(
-              builder: (context) =>
-                  PreviewMarkdown(title: file.name, data: acb)));
-    } else {
-      var fullPath = direcPath;
-      if (previousPath != null) {
-        fullPath = previousPath + direcPath;
-      }
-      PathUri path = PathUri.parse(fullPath);
-      final bytes = await cli.webdav.get(path);
-      final dir = await getApplicationDocumentsDirectory();
-      final localFile = File('${dir.path}/${file.name}');
-      await localFile.writeAsBytes(bytes);
-      // Open the file
-      OpenFile.open(localFile.path);
-    }
-  }
-
-  void downloadFile(webdav.File file, String direcPath,
-      {String? previousPath}) async {
-    final folderName = "Nextcloud Download";
-    final dir = Directory("storage/emulated/0/$folderName");
-
-    if (await dir.exists()) {
-      // thư mục đã tồn tại, không cần làm gì
-    } else {
-      // thư mục chưa tồn tại, tạo nó
-      await dir.create();
-    }
-      var fullPath = direcPath;
-      if (previousPath != null) {
-        fullPath = previousPath + direcPath;
-      }
-      PathUri path = PathUri.parse(fullPath);
-      final bytes = await cli.webdav.get(path);
-      final localFile = File('${dir.path}/${file.name}');
-      await localFile.writeAsBytes(bytes).then((value) {
-        Fluttertoast.showToast(msg: "Đã tải ${file.name} về thư mục $dir",timeInSecForIosWeb: 3);
-      });
-
-  }
 }

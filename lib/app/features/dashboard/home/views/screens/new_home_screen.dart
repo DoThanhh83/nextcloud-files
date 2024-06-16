@@ -339,6 +339,8 @@ class _NewHomeScreenState extends State<NewHomeScreen> {
   }
 }
 
+
+///widget bỏ đi
 class StorageChart extends StatefulWidget {
   const StorageChart({Key? key}) : super(key: key);
 

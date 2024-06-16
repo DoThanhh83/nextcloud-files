@@ -1,11 +1,10 @@
-import 'package:file_man/app/utils/global.dart';
 import 'package:file_man/app/utils/model/userstatus.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:nextcloud/files_sharing.dart';
 import 'package:nextcloud/nextcloud.dart';
-import 'package:nextcloud/provisioning_api.dart';
 import 'package:nextcloud/user_status.dart';
+
+import '../../../../../utils/global.dart';
 
 class ListUser extends StatefulWidget {
   final NextcloudClient cli;
@@ -21,6 +20,7 @@ class ListUser extends StatefulWidget {
 class _ListUserState extends State<ListUser> {
   // List<String> users = [];
   List<UserStatus> users = [];
+  List<UserStatus> tempusers = [];
   String search = '';
   TextEditingController controller = TextEditingController();
 
@@ -38,23 +38,25 @@ class _ListUserState extends State<ListUser> {
     controller.dispose();
   }
 
-  void loadData(String? search) {
-    var datt1;
-    if (search == null) {
-      datt1 = widget.cli.userStatus.statuses.findAll();
-    } else {
-      widget.cli.userStatus.statuses.find(userId: search);
-    }
-    datt1.then((value) {
-      var val = value.body.toJson();
-      print(val);
-      List data = val['ocs']['data'];
-      List<UserStatus> abc =
+  Future<void> loadData(String? search) async {
+      var datt1;
+      if (search == null) {
+        datt1 = widget.cli.userStatus.statuses.findAll();
+      } else {
+        datt1 = widget.cli.userStatus.statuses.find(userId: search);
+      }
+      await datt1.then((value) {
+        setState(() {
+          var val = value.body.toJson();
+          print(val);
+          List data = val['ocs']['data'];
+          List<UserStatus> abc =
           data.map((item) => UserStatus.fromJson(item)).toList();
-      setState(() {
-        users = abc;
+          users =
+              abc.where((element) => element.userId != Global.userName).toList();
+          tempusers = users;
+        });
       });
-    });
     // final data = widget.cli.provisioningApi.users.getUsers(search: search);
     // var abc;
     // data.then((value) {
@@ -72,6 +74,14 @@ class _ListUserState extends State<ListUser> {
     //   });
     // });
   }
+ void searchUser(String? search) {
+    if(search != ""){
+      users = users.where((element) => element.userId!.contains(search as Pattern)).toList();
+    }
+    else{
+     users = List.from(tempusers);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -80,8 +90,7 @@ class _ListUserState extends State<ListUser> {
           title: Text('Danh sách người dùng'),
         ),
         body: users.length > 0
-            ?
-        Column(
+            ? Column(
                 children: [
                   Padding(
                     padding: const EdgeInsets.all(8.0),
@@ -94,8 +103,11 @@ class _ListUserState extends State<ListUser> {
                           border: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(8.0))),
                       onChanged: (text) {
-                        loadData(text);
+                        setState(() {
+                         searchUser(text);
+                        });
                       },
+
                     ),
                   ),
                   Expanded(
@@ -106,7 +118,7 @@ class _ListUserState extends State<ListUser> {
                           title: Text('${index + 1}.${users[index].userId}'),
                           onTap: () {
                             widget.onDone?.call(users[index].userId.toString());
-                            Navigator.pop(context);
+                            // Navigator.pop(context);
                           },
                         );
                       },

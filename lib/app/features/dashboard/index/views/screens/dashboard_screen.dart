@@ -1,5 +1,7 @@
 library dashboard;
 
+import 'dart:io';
+
 import 'package:file_man/app/constans/app_constants.dart';
 import 'package:file_man/app/features/dashboard/cloud/views/screens/cloud_screen.dart';
 import 'package:file_man/app/features/dashboard/home/views/screens/new_home_screen.dart';
@@ -24,7 +26,27 @@ class DashboardScreen extends GetView<DashboardController> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
+    return  Platform.isIOS
+            ? Scaffold(
+                body: PageView(
+                  controller: controller.page,
+                  onPageChanged: (index) => controller.onChangedPage(index),
+                  children: [
+                    CloudScreen(),
+                    ProfilePage(),
+                  ],
+                ),
+                bottomNavigationBar: Obx(
+                  () => _BottomNavbar(
+                    currentIndex: controller.currentIndex.value,
+                    onSelected: (index) {
+                      controller.changePage(index);
+                    },
+                  ),
+                ),
+              )
+            :
+        Scaffold(
       body: PageView(
         controller: controller.page,
         onPageChanged: (index) => controller.onChangedPage(index),

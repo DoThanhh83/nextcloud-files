@@ -6,7 +6,6 @@ import 'package:get/get.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:storage_info/storage_info.dart';
 
-import 'const.dart';
 
 class FilesController extends GetxController {
   final FileManagerController controller = FileManagerController();

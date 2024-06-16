@@ -48,24 +48,6 @@ class _FileListScreenState extends State<ListSharingTo> {
     loadData2();
   }
 
-  Future<List<FileSharing>> loadData() async {
-    // cli = widget.client!;
-    final acb = cli.filesSharing.shareapi
-        .getShares(sharedWithMe: "false", includeTags: "true");
-    var body;
-
-    acb.then((value) {
-      body = value.body.toJson();
-      print(body);
-      List<dynamic> fileData = body['ocs']['data'];
-      setState(() {
-        fileSharingList =
-            fileData.map((data) => FileSharing.fromJson(data)).toList();
-      });
-    });
-    return fileSharingList;
-  }
-
   Future<List<FileSharing>> loadData2() async {
     String withME = widget.toMe.toString();
     var body;
@@ -147,7 +129,7 @@ class _FileListScreenState extends State<ListSharingTo> {
           actions: [
             IconButton(
                 onPressed: () {
-                  loadData();
+                  loadData2();
                 },
                 icon: Icon(Icons.rotate_left)),
           ],

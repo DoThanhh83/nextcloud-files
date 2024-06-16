@@ -36,7 +36,19 @@ class ApiPath {
     return prefs.getString('password') ?? '';
   }
 
+  static clearURLData() async {
+    final prefs = await SharedPreferences.getInstance();
+    prefs.remove('baseUrl');
+  }
+  static void clearUserData() {
+    final prefs =  SharedPreferences.getInstance();
+    prefs.then((value) => value.remove('username'));
+  }
 
+  static void clearPassData() {
+    final prefs =  SharedPreferences.getInstance();
+    prefs.then((value) => value.remove('password'));
+  }
 
   static Future<void> loadFiles( NextcloudClient client ) async {
     final data = await client.dashboard.dashboardApi.getWidgetItemsV2();
@@ -66,6 +78,8 @@ class ApiPath {
     print("daay la $data3");
 
   }
+
+
 }
 
 extension NextcloudClientExtension on NextcloudClient {
