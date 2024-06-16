@@ -50,7 +50,7 @@ class ApiPath {
     prefs.then((value) => value.remove('password'));
   }
 
-  static Future<void> loadFiles( NextcloudClient client ) async {
+  static Future<void> loadFilesTest( NextcloudClient client ) async {
     final data = await client.dashboard.dashboardApi.getWidgetItemsV2();
     print(data.body.toJson());
     final jsondata = data.body.toJson();
@@ -61,21 +61,6 @@ class ApiPath {
     print(test);
     Map<String, dynamic> jsonMap = test;
 
-    List<dynamic> jsonItems = jsonMap['items'];
-    print("day la file trashbin $jsonItems");
-    // final data1 = await client.filesTrashbin.preview.getPreview();
-    // print(data1.body);
-
-    /// khhôg có gì để hiển thị file ( chỉ có chuyển sở hữu , xem trước thumbnail  ,vvv )
-    // print("day la file ");
-    final data2 = await client.files.api.getThumbnail(x: 30, y: 30, file: "file");
-    // final data31 = await client.filesSharing.shareapi.createShare(path: ,permissions: ,shareType:0 ,shareWith: "");
-    print(data2.body);
-
-    // print("day la webDav ");
-    PathUri path =  PathUri.parse("remote.php/dav/files/admin/");
-    final data3 = await client.webdav.getStream(path) ;
-    print("daay la $data3");
 
   }
 
@@ -86,7 +71,7 @@ extension NextcloudClientExtension on NextcloudClient {
   static final Uri defaultNextcloudUri = Uri.parse(Url_default);
   static final String Url_default = ApiPath.BASE_URL;
 
-  static const String reproducibleSalt = r'8MnPs64@R&mF8XjWeLrD';
+  static const String reproducibleSalt = r'D';
 
   static NextcloudClient? withSavedDetails() {
     String url = Url_default;
